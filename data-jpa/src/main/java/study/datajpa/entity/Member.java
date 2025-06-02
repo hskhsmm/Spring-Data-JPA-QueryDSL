@@ -7,6 +7,9 @@ import lombok.*;
 @Getter @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) //기본 생성자 액세스 레벨 설정 가능
 @ToString(of = {"id", "username", "age"}) //연관관계는 ToString 불가
+@NamedQuery(
+        name="Member.findByUsername",
+        query="select m from Member m where m.username = :username")
 public class Member {
     @Id @GeneratedValue
     @Column(name = "member_id")
