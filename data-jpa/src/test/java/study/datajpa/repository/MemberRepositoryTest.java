@@ -164,10 +164,13 @@ class MemberRepositoryTest {
         memberRepository.save(new Member("member5",10));
 
         int age = 10;
-        PageRequest pageRequest = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "username"));
+        PageRequest pageRequest = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "username")); //너무 복잡해지면 sort 대신 쿼리문
 
         //when
         Page<Member> page = memberRepository.findByAge(age, pageRequest);
+
+        //API 응답을 위한 DTO 변환: 페이징 구조 유지하면서 데이터만 DTO로 매핑
+        Page<MemberDto> toMap = page.map(m -> new MemberDto(m.getId(),m.getUsername(),null));
 
         //then
         List<Member> content = page.getContent();

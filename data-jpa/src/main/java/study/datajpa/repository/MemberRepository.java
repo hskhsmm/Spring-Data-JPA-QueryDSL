@@ -1,5 +1,6 @@
 package study.datajpa.repository;
 
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -39,5 +40,20 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Member findMemberByUsername(String username); //단건
     Optional<Member> findOptionalByUsername(String username); //단건 Optional
 
+    //카운트쿼리 추가 적용.  hibernate 6에선 의미없는 left join 최적화. 따라서 select m from Member m과 같다.
+    @Query(value = "select m from Member m left join m.team t")
     Page<Member> findByAge(int age, Pageable pageable); //pageable 인터페이스만 넘기면 됨.
+//    이렇게 left join을 걸었지만,
+//    정작 select절이나 where절에서 t를 사용하지 않으면 Hibernate 6에서 다음과 같은 일이 발생합니다:
+//
+//            🔸 의미 없는 JOIN으로 판단
+//
+//            🔸 SQL에 JOIN 자체가 누락되거나 제거
+//
+//            🔸 일부 상황에선 "t가 사용되지 않았습니다" 경고 또는 오류
+
+
+    //카운트 쿼리 분리
+    @Query(value = "select m from Member m", countQuery = "select count(m.username) from Member m")
+    Page<Member> findMemberAllCountBy(Pageable pageable);
 }
