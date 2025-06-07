@@ -212,7 +212,7 @@ class MemberRepositoryTest {
         teamRepository.save(teamA);
         teamRepository.save(teamB);
         Member member1 = new Member("member1",10, teamA);
-        Member member2 = new Member("member2",10, teamB);
+        Member member2 = new Member("member1",10, teamB);
         memberRepository.save(member1);
         memberRepository.save(member2);
 
@@ -220,7 +220,7 @@ class MemberRepositoryTest {
         em.clear();
 
         //when
-        List<Member> members = memberRepository.findMemberFetchJoin();
+        List<Member> members = memberRepository.findEntityGraphByUsername("member1");
 
         for (Member member : members) {
             System.out.println("member = " + member.getUsername());
