@@ -78,6 +78,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findMemberEntityGraph();
 
     // 조건 기반 조회에도 EntityGraph를 적용하여 team 즉시 로딩
+    //@EntityGraph("Member.all")
     @EntityGraph(attributePaths = ("team"))
     List<Member> findEntityGraphByUsername(@Param("username") String username);
+
 }
