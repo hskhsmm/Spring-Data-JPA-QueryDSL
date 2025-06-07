@@ -19,7 +19,7 @@ public class Member {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_id")
-    private Team team;
+    private Team team; //프록시 객체
     public Member(String username) {
         this(username, 0);
     }
