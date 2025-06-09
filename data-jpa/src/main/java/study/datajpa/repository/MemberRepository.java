@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 // Member 엔티티에 대한 CRUD 및 쿼리를 정의하는 Repository
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom {
 
     // username이 일치하고 age가 주어진 값보다 큰 Member 목록 조회
     List<Member> findByUsernameAndAgeGreaterThan(String username, int age);
