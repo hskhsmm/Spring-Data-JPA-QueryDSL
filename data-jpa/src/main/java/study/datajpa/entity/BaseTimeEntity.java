@@ -4,9 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
-import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -15,12 +13,13 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @MappedSuperclass
 @Getter
-public class BaseEntity extends BaseTimeEntity{
+public class BaseTimeEntity { //BaseEntity와 기능 분리해서 시간 정보만 관리. SRP 적용
 
-    @CreatedBy
+    @CreatedDate
     @Column(updatable = false)
-    private String createdBy;
+    private LocalDateTime createdDate;
 
-    @LastModifiedBy
-    private String lastModifiedBy;
+
+    @LastModifiedDate
+    private LocalDateTime lastModifiedDate;
 }
