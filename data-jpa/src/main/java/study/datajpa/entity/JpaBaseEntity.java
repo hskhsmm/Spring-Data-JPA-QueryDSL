@@ -29,4 +29,6 @@ public class JpaBaseEntity {
         updatedDate = LocalDateTime.now();
     }
 
+
+
 }
