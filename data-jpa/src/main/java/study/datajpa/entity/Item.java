@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Item implements Persistable<String> {
-    @Id
+    @Id //persist하기 전까지 id는 생기지 않음
     private String id;
     @CreatedDate
     private LocalDateTime createdDate;
