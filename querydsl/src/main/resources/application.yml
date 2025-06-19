@@ -10,14 +10,14 @@ spring:
       path: /h2-console
   jpa:
     hibernate:
-      ddl-auto: update  # 필요에 따라 create, create-drop, none 등으로 변경 가능
+      ddl-auto: create  # 필요에 따라 create, create-drop, none 등으로 변경 가능
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
-    show-sql: true  # SQL 로그 출력 여부
+    show-sql: false  # SQL 로그 출력 여부. 근데 난 이미 p6spy가 있음
 
 logging:
   level:
     org.hibernate.SQL: debug
-    org.hibernate.type: trace
+ #   org.hibernate.type: trace
