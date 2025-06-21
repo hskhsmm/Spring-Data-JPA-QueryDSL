@@ -6,15 +6,16 @@ import lombok.*;
 
 @Entity
 @Getter @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED) //protected 기본생성자
 @ToString(of = {"id", "username", "age"})
 public class Member {
-    @Id
-    @GeneratedValue
+
+    @Id @GeneratedValue
     @Column(name = "member_id")
     private Long id;
     private String username;
     private int age;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_id")
     private Team team;
