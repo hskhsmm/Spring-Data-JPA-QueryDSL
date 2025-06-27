@@ -87,4 +87,13 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Member> findLockByUsername(String username);
 
+    @Query(value = "select * from member where username= ?", nativeQuery = true)
+    Member findByNativeQuery(String username);
+
+    //dto를 뽑는데 native 쿼리인데 동적 쿼리는 아닌것
+    @Query(value = "SELECT m.member_id as id, m.username, t.name as teamName " +
+            "FROM member m left join team t ON m.team_id = t.team_id",
+            countQuery = "SELECT count(*) from member",
+            nativeQuery = true)
+    Page<MemberProjection> findByNativeProjection(Pageable pageable);
 }
