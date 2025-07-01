@@ -1,3 +1,5 @@
+package study.querydsl;
+
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -245,5 +247,53 @@ public class QuerydslBasicTest {
                 .where(member.username.eq(team.name))
                 .fetch();
     }
+
+    //회원과 팀을 조인하면서, 팀 이름이 teamA인 팀만 조인, 회원은 모두 조회
+    //연관관계 있음
+    @Test
+    public void join_on_filtering() throws Exception {
+        List<Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(member.team, team).on(team.name.eq("teamA"))
+                .fetch();
+
+        for (Tuple tuple : result) {
+            System.out.println("tuple= " + tuple);
+        }
+    }
+
+
+    /**
+     * 연관관계 없는 엔티티 외부 조인
+     * 회원의 이름이 팀 이름과 같은 대상 외부 조인
+     */
+    @Test
+    public void join_on_no_relation() {
+        // 연관관계가 없는 team 이름과 username이 같은 데이터를 테스트하기 위해 더미 데이터 저장
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+        em.persist(new Member("teamC"));
+
+        // member 테이블과 team 테이블을 외부 조인 (LEFT JOIN) 하는데,
+        // 둘 사이에 실제 연관관계가 없으므로 ON 절을 직접 지정해야 함
+        List<Tuple> result = queryFactory
+                .select(member, team) // member와 team 정보를 모두 조회
+                .from(member)         // member 테이블 기준으로 시작
+                .leftJoin(team).on(member.username.eq(team.name)) // username과 team.name이 같은 경우만 LEFT JOIN
+                .where(member.username.eq(team.name)) // 결과 중 username == team.name인 것만 필터링
+                .fetch(); // 결과 조회
+
+        // 결과 출력
+        for (Tuple tuple : result) {
+            System.out.println("tuple= " + tuple);
+        }
+        //    .leftJoin(team).on(member.username.eq(team.name))
+        //    member와 team 사이에 JPA 연관관계가 없음.
+        //    그런데 username == team.name이라는 논리 조건으로 조인을 시도함.
+        //    이게 바로 세타 조인이다.
+        //    즉, 이 코드는 QueryDSL에서 연관관계 없이 수동으로 조인 조건을 명시한 세타 조인
+    }
+
 
 }
