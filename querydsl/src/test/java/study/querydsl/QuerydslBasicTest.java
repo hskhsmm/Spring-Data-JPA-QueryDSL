@@ -1,5 +1,3 @@
-package study.querydsl;
-
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -43,9 +41,9 @@ public class QuerydslBasicTest {
         em.persist(new Member("member4", 40, teamB));
     }
 
+    // JPQL로 단건 조회 테스트
     @Test
     public void startJPQL() {
-        // JPQL 방식
         Member findMember = em.createQuery(
                         "select m from Member m where m.username = :username", Member.class)
                 .setParameter("username", "member1")
@@ -54,9 +52,9 @@ public class QuerydslBasicTest {
         assertThat(findMember.getUsername()).isEqualTo("member1");
     }
 
+    // QueryDSL로 단건 조회 - Q타입 직접 생성
     @Test
     public void startQuerydsl() {
-        // Querydsl 방식 (직접 생성)
         QMember m = new QMember("m");
 
         Member findMember = queryFactory
@@ -69,9 +67,9 @@ public class QuerydslBasicTest {
         assertThat(findMember.getUsername()).isEqualTo("member1");
     }
 
+    // QueryDSL로 단건 조회 - Q타입 static import 사용
     @Test
     public void startQuerydsl2() {
-        // Querydsl 방식 (Q타입 static 인스턴스 사용)
         Member findMember = queryFactory
                 .select(member)
                 .from(member)
@@ -82,6 +80,7 @@ public class QuerydslBasicTest {
         assertThat(findMember.getUsername()).isEqualTo("member1");
     }
 
+    // QueryDSL로 조건 검색 - and() 사용
     @Test
     public void search() {
         Member findMember = queryFactory
@@ -92,6 +91,7 @@ public class QuerydslBasicTest {
         assertThat(findMember.getUsername()).isEqualTo("member1");
     }
 
+    // QueryDSL로 조건 검색 - where 파라미터로 and 자동 처리
     @Test
     public void searchAndParam() {
         Member findMember = queryFactory
@@ -103,39 +103,34 @@ public class QuerydslBasicTest {
         assertThat(findMember.getUsername()).isEqualTo("member1");
     }
 
+    // 다양한 fetch 방식 테스트
     @Test
     public void resultFetch() {
         List<Member> fetch = queryFactory
                 .selectFrom(member)
-                .fetch();
+                .fetch(); // 전체 리스트
 
         Member fetchOne = queryFactory
                 .selectFrom(member)
-                .fetchOne(); //단건
+                .fetchOne(); // 단건
 
         Member fetchFirst = queryFactory
                 .selectFrom(member)
-                .fetchFirst();
+                .fetchFirst(); // 첫 번째 레코드
 
         QueryResults<Member> results = queryFactory
                 .selectFrom(member)
-                .fetchResults();
+                .fetchResults(); // 페이징 정보 포함
 
         results.getTotal();
         List<Member> content = results.getResults();
 
         long total = queryFactory
                 .selectFrom(member)
-                .fetchCount();
+                .fetchCount(); // 총 개수 조회
     }
 
-
-    /**
-     * 회원 정렬 순서
-     * 1.회원 나이 내림차순(desc)
-     * 2.회원 이름 올림차순(asc)
-     * 단 2에서 회원 이름이 없으면 마지막에 출력(nulls last)
-     */
+    // 정렬 테스트: 나이 내림차순 + 이름 오름차순(null은 마지막)
     @Test
     public void sort() {
         em.persist(new Member(null,100));
@@ -154,27 +149,28 @@ public class QuerydslBasicTest {
         assertThat(member5.getUsername()).isEqualTo("member5");
         assertThat(member6.getUsername()).isEqualTo("member6");
         assertThat(memberNull.getUsername()).isNull();
-
     }
 
+    // 페이징 테스트 (offset/limit)
     @Test
     public void paging1() {
         List<Member> result = queryFactory
                 .selectFrom(member)
                 .orderBy(member.age.desc())
-                .offset(1) //0부터 시작인데 1이면 하나 스킵
+                .offset(1)
                 .limit(2)
                 .fetch();
 
         assertThat(result.size()).isEqualTo(2);
     }
 
+    // 페이징 + 전체 개수 조회 포함
     @Test
     public void paging2() {
         QueryResults<Member> queryResults = queryFactory
                 .selectFrom(member)
                 .orderBy(member.username.desc())
-                .offset(1) //0부터 시작인데 1이면 하나 스킵
+                .offset(1)
                 .limit(2)
                 .fetchResults();
 
@@ -184,7 +180,7 @@ public class QuerydslBasicTest {
         assertThat(queryResults.getResults().size()).isEqualTo(2);
     }
 
-    //집합
+    // 집계 함수 테스트
     @Test
     public void aggregation() {
         List<Tuple> result = queryFactory
@@ -205,9 +201,7 @@ public class QuerydslBasicTest {
         assertThat(tuple.get(member.age.min())).isEqualTo(10);
     }
 
-    /**
-     * 팀의 이름과 각 팀의 평균 연령을 구하자
-     */
+    // 그룹핑 테스트: 팀별 평균 나이
     @Test
     public void group() throws Exception {
         List<Tuple> result = queryFactory
@@ -221,16 +215,15 @@ public class QuerydslBasicTest {
         Tuple teamB = result.get(1);
 
         assertThat(teamA.get(team.name)).isEqualTo("teamA");
-        assertThat(teamA.get(member.age.avg())).isEqualTo(15); // (10 + 20) / 2
+        assertThat(teamA.get(member.age.avg())).isEqualTo(15);
 
         assertThat(teamB.get(team.name)).isEqualTo("teamB");
-        assertThat(teamB.get(member.age.avg())).isEqualTo(35); //(30 + 40) / 2
-
+        assertThat(teamB.get(member.age.avg())).isEqualTo(35);
     }
 
+    // 조인 테스트: 특정 팀 소속 회원 조회
     @Test
     public void join() {
-
         List<Member> result = queryFactory
                 .selectFrom(member)
                 .join(member.team, team)
@@ -240,6 +233,7 @@ public class QuerydslBasicTest {
         assertThat(result).extracting("username").containsExactly("member1", "member2");
     }
 
+    // 세타 조인 (연관관계 없이 조인)
     @Test
     public void theta_join() {
         em.persist(new Member("teamA"));
@@ -251,6 +245,5 @@ public class QuerydslBasicTest {
                 .where(member.username.eq(team.name))
                 .fetch();
     }
-
 
 }
