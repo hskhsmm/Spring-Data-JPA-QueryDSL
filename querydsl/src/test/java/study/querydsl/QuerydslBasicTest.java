@@ -2,6 +2,7 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -18,6 +19,7 @@ import study.querydsl.entity.Team;
 
 import java.util.List;
 
+import static com.querydsl.jpa.JPAExpressions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static study.querydsl.entity.QMember.*;
 import static study.querydsl.entity.QTeam.team;
@@ -343,8 +345,7 @@ public class QuerydslBasicTest {
         List<Member> result = queryFactory
                 .selectFrom(member) // member 엔티티를 기준으로 조회
                 .where(member.age.eq( // 나이가 서브쿼리의 결과와 같은 조건
-                        JPAExpressions
-                                .select(memberSub.age.max()) // memberSub를 기준으로 최대 나이 조회 (서브쿼리)
+                        select(memberSub.age.max()) // memberSub를 기준으로 최대 나이 조회 (서브쿼리)
                                 .from(memberSub) // 서브쿼리의 대상: member 테이블
                 ))
                 .fetch(); // 결과 리스트로 조회
@@ -363,8 +364,7 @@ public class QuerydslBasicTest {
         List<Member> result = queryFactory
                 .selectFrom(member) // 메인 쿼리: member 테이블에서 조회
                 .where(member.age.goe( // 나이가 서브쿼리 평균보다 크거나 같은 조건
-                        JPAExpressions
-                                .select(memberSub.age.avg()) // 서브쿼리: 평균 나이
+                        select(memberSub.age.avg()) // 서브쿼리: 평균 나이
                                 .from(memberSub)
                 ))
                 .fetch(); // 결과 가져오기
@@ -383,8 +383,7 @@ public class QuerydslBasicTest {
         List<Member> result = queryFactory
                 .selectFrom(member) // 메인 쿼리: member 테이블에서 조회
                 .where(member.age.in( // age가 서브쿼리 결과에 포함된 경우
-                        JPAExpressions
-                                .select(memberSub.age) // 서브쿼리: 나이가 10보다 큰 멤버들의 나이 목록
+                        select(memberSub.age) // 서브쿼리: 나이가 10보다 큰 멤버들의 나이 목록
                                 .from(memberSub)
                                 .where(memberSub.age.gt(10))
                 ))
@@ -394,7 +393,45 @@ public class QuerydslBasicTest {
         assertThat(result).extracting("age").containsExactly(20, 30, 40);
     }
 
+    //from절의 서브쿼리는 지원하지 않음.
+    //서브쿼리를 join으로 변경하고 애플리케이션에서 쿼리를 2번 분리해서 실행하자
+    //그래도 안되면 nativeSQL
 
+
+    /**
+     * case문
+     * select, 조건절(where)에서 사용 가능
+     */
+    @Test
+    public void basicCase() {
+        List<String> result = queryFactory
+                .select(member.age
+                        .when(10).then("열살")
+                        .when(20).then("스무살")
+                        .otherwise("기타"))
+                .from(member)
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
+
+    @Test
+    public void complexCase() {
+        List<String> result = queryFactory
+                .select(new CaseBuilder()
+                        .when(member.age.between(0, 20)).then("0~20살")
+                        .when(member.age.between(21, 30)).then("21~30살")
+                        .otherwise("기타"))
+                .from(member)
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+        
+    }
 
 
 }
