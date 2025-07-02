@@ -2,6 +2,7 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -315,6 +316,7 @@ public class QuerydslBasicTest {
         boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
         assertThat(loaded).as("페치 조인 미적용").isFalse();
     }
+
     @Test
     public void fetchJoinUse() {
         em.flush();
@@ -329,6 +331,28 @@ public class QuerydslBasicTest {
         boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
         assertThat(loaded).as("페치 조인 미적용").isTrue();
     }
+
+
+    @Test
+    public void subQuery() {
+
+        // 서브쿼리에 사용할 QMember 별칭 생성 (메인 쿼리와 충돌 방지)
+        QMember memberSub = new QMember("memberSub");
+
+        // 메인 쿼리: 나이가 가장 많은 사람을 조회
+        List<Member> result = queryFactory
+                .selectFrom(member) // member 엔티티를 기준으로 조회
+                .where(member.age.eq( // 나이가 서브쿼리의 결과와 같은 조건
+                        JPAExpressions
+                                .select(memberSub.age.max()) // memberSub를 기준으로 최대 나이 조회 (서브쿼리)
+                                .from(memberSub) // 서브쿼리의 대상: member 테이블
+                ))
+                .fetch(); // 결과 리스트로 조회
+
+        // 결과 검증: 나이가 40인 멤버만 조회되어야 함
+        assertThat(result).extracting("age").containsExactly(40);
+    }
+
 
 
 
