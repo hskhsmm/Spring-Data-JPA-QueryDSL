@@ -354,6 +354,46 @@ public class QuerydslBasicTest {
     }
 
 
+    @Test
+    public void subQueryGoe() {
+
+        // 서브쿼리용 QMember 객체 생성 (별칭 사용)
+        QMember memberSub = new QMember("memberSub");
+
+        List<Member> result = queryFactory
+                .selectFrom(member) // 메인 쿼리: member 테이블에서 조회
+                .where(member.age.goe( // 나이가 서브쿼리 평균보다 크거나 같은 조건
+                        JPAExpressions
+                                .select(memberSub.age.avg()) // 서브쿼리: 평균 나이
+                                .from(memberSub)
+                ))
+                .fetch(); // 결과 가져오기
+
+        // 평균 이상 나이인 멤버는 30, 40살 -> 검증
+        assertThat(result).extracting("age").containsExactly(30, 40);
+    }
+
+
+    @Test
+    public void subQueryIn() {
+
+        // 서브쿼리용 QMember 객체 생성
+        QMember memberSub = new QMember("memberSub");
+
+        List<Member> result = queryFactory
+                .selectFrom(member) // 메인 쿼리: member 테이블에서 조회
+                .where(member.age.in( // age가 서브쿼리 결과에 포함된 경우
+                        JPAExpressions
+                                .select(memberSub.age) // 서브쿼리: 나이가 10보다 큰 멤버들의 나이 목록
+                                .from(memberSub)
+                                .where(memberSub.age.gt(10))
+                ))
+                .fetch(); // 결과 가져오기
+
+        // 나이가 20, 30, 40인 멤버만 조회됨 -> 검증
+        assertThat(result).extracting("age").containsExactly(20, 30, 40);
+    }
+
 
 
 
