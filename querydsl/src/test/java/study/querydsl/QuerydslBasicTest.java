@@ -1,5 +1,6 @@
 package study.querydsl;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
@@ -607,6 +608,47 @@ public class QuerydslBasicTest {
             System.out.println("memberDto = " + memberDto );
         }
 
+    }
+
+    //지금부터 동적 쿼리
+    @Test
+    public void dynamicQuery_booleanBuilder() {
+        String usernameParam = "member1";
+        Integer ageParam = 10;
+
+        // 조건에 따라 동적으로 쿼리 실행
+        List<Member> result = searchMember1(usernameParam, ageParam);
+
+        // 결과 검증: member1이 나이 10인 경우 한 명만 조회되어야 함
+        assertThat(result.size()).isEqualTo(1);
+    }
+
+    /**
+     * 동적 조건 검색 메서드
+     * @param usernameCond - 검색할 사용자 이름 (nullable)
+     * @param ageCond - 검색할 나이 조건 (nullable)
+     * @return 조건에 맞는 Member 리스트
+     */
+    private List<Member> searchMember1(String usernameCond, Integer ageCond) {
+
+        // BooleanBuilder는 QueryDSL의 where 절에 동적으로 조건을 추가할 수 있게 해주는 빌더 객체
+        BooleanBuilder builder = new BooleanBuilder();
+
+        // 사용자 이름 조건이 null이 아니면 where 절에 추가
+        if (usernameCond != null) {
+            builder.and(member.username.eq(usernameCond));
+        }
+
+        // 나이 조건이 null이 아니면 where 절에 추가
+        if (ageCond != null) {
+            builder.and(member.age.eq(ageCond));
+        }
+
+        // builder에 누적된 조건들을 적용하여 쿼리 실행
+        return queryFactory
+                .selectFrom(member)
+                .where(builder)  // 동적으로 생성된 조건 포함
+                .fetch();        // 결과 리스트로 반환
     }
 
 
