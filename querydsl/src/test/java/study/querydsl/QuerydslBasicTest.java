@@ -3,7 +3,9 @@ package study.querydsl;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -11,6 +13,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceUnit;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -649,6 +652,44 @@ public class QuerydslBasicTest {
                 .selectFrom(member)
                 .where(builder)  // 동적으로 생성된 조건 포함
                 .fetch();        // 결과 리스트로 반환
+    }
+
+
+    @Test
+    public void dynamicQuery_WhereParam() throws Exception {
+        String usernameParam = "member1";
+        Integer ageParam = 10;
+
+        //동적 조건 기반 쿼리 실행
+        List<Member> result = searchMember2(usernameParam, ageParam);
+        Assertions.assertThat(result.size()).isEqualTo(1);
+    }
+
+    private List<Member> searchMember2(String usernameCond, Integer ageCond) {
+        return queryFactory
+                .selectFrom(member)
+                //where 절에 null-safe 메서드 나열
+                //null인 경우 해당 조건 무시
+                .where(usernameEq(usernameCond), ageEq(ageCond))
+                .fetch();
+    }
+
+    /**
+     * 사용자 이름 조건 생성
+     * - usernameCond가 null이면 null -> where 절에서 무시
+     * - 아니면 member.username.eq(usernameCond)반환
+     */
+    private BooleanExpression usernameEq(String usernameCond) {
+        return usernameCond != null ? member.username.eq(usernameCond) : null;
+    }
+
+    /**
+     * 나이 조건 생성
+     * - ageCond가 null이면 null -> where 절에서 무시
+     * - 아니면 member.age.eq(ageCond)반환
+     */
+    private BooleanExpression ageEq(Integer ageCond) {
+        return ageCond != null ? member.age.eq(ageCond) : null;
     }
 
 
