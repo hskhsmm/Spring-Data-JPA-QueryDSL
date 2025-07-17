@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/Spring data jpa-QueryDSL.iml" filepath="$PROJECT_DIR$/.idea/Spring data jpa-QueryDSL.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/data-jpa.main.iml" filepath="$PROJECT_DIR$/.idea/modules/data-jpa.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/querydsl.main.iml" filepath="$PROJECT_DIR$/.idea/modules/querydsl.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/querydsl.test.iml" filepath="$PROJECT_DIR$/.idea/modules/querydsl.test.iml" />
     </modules>
   </component>
 </project>
