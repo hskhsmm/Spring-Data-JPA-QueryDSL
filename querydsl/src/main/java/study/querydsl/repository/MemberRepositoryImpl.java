@@ -2,14 +2,17 @@ package study.querydsl.repository;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import study.querydsl.dto.MemberSearchCondition;
 import study.querydsl.dto.MemberTeamDto;
 import study.querydsl.dto.QMemberTeamDto;
+import study.querydsl.entity.Member;
 
 import java.util.List;
 
@@ -116,7 +119,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 .fetch();                          // 실제 데이터만 조회
 
         // 2. 전체 데이터 개수 조회 (카운트 쿼리)
-        long total = queryFactory
+        JPAQuery<Member> countQuery = queryFactory
                 .select(member)                    // 단순히 member로 카운트
                 .from(member)
                 .leftJoin(member.team, team)
@@ -125,11 +128,13 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                         teamNameEq(condition.getTeamName()),
                         ageGoe(condition.getAgeGoe()),
                         ageLoe(condition.getAgeLoe())
-                )
-                .fetchCount();                     // 전체 개수 조회
+                );                     // 전체 개수 조회
+
+
 
         // 3. 결과를 Page 객체로 감싸서 반환
-        return new PageImpl<>(content, pageable, total);
+        // countQuery 최적화. 컨텐츠 사이즈가 페이지 사이즈보다 작으면 데이터가 세 개밖에 없으니까 토탈카운트가 되면 되겠지?
+        return PageableExecutionUtils.getPage(content, pageable, () -> countQuery.fetchCount());
     }
 
 
