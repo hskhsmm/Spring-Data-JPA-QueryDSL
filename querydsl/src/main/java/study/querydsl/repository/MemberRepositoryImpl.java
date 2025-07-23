@@ -2,7 +2,6 @@ package study.querydsl.repository;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
@@ -12,7 +11,6 @@ import org.springframework.data.support.PageableExecutionUtils;
 import study.querydsl.dto.MemberSearchCondition;
 import study.querydsl.dto.MemberTeamDto;
 import study.querydsl.dto.QMemberTeamDto;
-import study.querydsl.entity.Member;
 
 import java.util.List;
 
@@ -108,34 +106,44 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 ))
                 .from(member)                 // member 테이블 기준
                 .leftJoin(member.team, team)  // team 테이블과 LEFT JOIN
-                .where(                       // 조건절 - null 체크는 각 메서드 내부에서 처리
+                .where(
                         usernameEq(condition.getUsername()),
                         teamNameEq(condition.getTeamName()),
                         ageGoe(condition.getAgeGoe()),
                         ageLoe(condition.getAgeLoe())
                 )
-                .offset(pageable.getOffset())      // 몇 번째부터 조회할지 (페이지 시작 위치)
-                .limit(pageable.getPageSize())     // 한 페이지에 몇 개 조회할지
-                .fetch();                          // 실제 데이터만 조회
-
-        // 2. 전체 데이터 개수 조회 (카운트 쿼리)
-        JPAQuery<Member> countQuery = queryFactory
-                .select(member)                    // 단순히 member로 카운트
-                .from(member)
-                .leftJoin(member.team, team)
-                .where(                            // 동일한 조건으로 카운트 쿼리 실행
-                        usernameEq(condition.getUsername()),
-                        teamNameEq(condition.getTeamName()),
-                        ageGoe(condition.getAgeGoe()),
-                        ageLoe(condition.getAgeLoe())
-                );                     // 전체 개수 조회
-
-
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
 
         // 3. 결과를 Page 객체로 감싸서 반환
-        // countQuery 최적화. 컨텐츠 사이즈가 페이지 사이즈보다 작으면 데이터가 세 개밖에 없으니까 토탈카운트가 되면 되겠지?
-        return PageableExecutionUtils.getPage(content, pageable, () -> countQuery.fetchCount());
+        //   PageableExecutionUtils.getPage(...) 사용 이유:
+        // - content의 개수가 페이지 사이즈보다 작으면 자동으로 count 쿼리를 생략함 → 성능 최적화
+        // - 직접 PageImpl로 감싸는 방식보다 불필요한 쿼리 최소화 가능
+        // - 내부적으로 countSupplier는 필요할 때만 실행됨 (lazy evaluation)
+
+        // fetchCount() 제거 이유:
+        // - QueryDSL 5.0 이상에서 fetchCount()는 deprecated 되었고, 정확하지 않은 count를 반환할 수 있어 추천되지 않음
+        // - 대신 select(member.count()).fetchOne()을 명시적으로 사용하여 명확한 count 쿼리 작성
+
+        // null-safe 처리:
+        // - fetchOne()은 결과가 없을 경우 null을 반환하므로, count가 null이면 0L을 반환하도록 처리
+        return PageableExecutionUtils.getPage(content, pageable, () -> {
+            Long count = queryFactory
+                    .select(member.count())           // 정확한 count 쿼리
+                    .from(member)
+                    .leftJoin(member.team, team)
+                    .where(
+                            usernameEq(condition.getUsername()),
+                            teamNameEq(condition.getTeamName()),
+                            ageGoe(condition.getAgeGoe()),
+                            ageLoe(condition.getAgeLoe())
+                    )
+                    .fetchOne();                      // fetchCount() 대신 fetchOne() 사용
+            return count != null ? count : 0L;        // null-safe 처리
+        });
     }
+
 
 
 
